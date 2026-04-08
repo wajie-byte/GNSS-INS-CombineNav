@@ -1,2 +1,1 @@
-# GNSS-SPP-RTK
-SPP and RTK
+GNSS/INS CombineNav
