@@ -45,6 +45,9 @@ CombineNav::NavState CombineNav::NavState::Initialize(const Config& config)
 		navstate.acc_scale[i] = config.init_imu_errors.init_accscale[i];
 	}
 	navstate.Cbn = Cal_C_b_n(config.init_state.init_att[2], config.init_state.init_att[1], config.init_state.init_att[0]);
-	navstate.qbn = euler2quaternion(config.init_state.init_att[2], config.init_state.init_att[1], config.init_state.init_att[1]);
+	navstate.qbn = euler2quaternion(config.init_state.init_att[2], config.init_state.init_att[1], config.init_state.init_att[0]);
+	navstate.Rm = Cal_RM(config.init_state.init_pos[0]);
+	navstate.Rn = Cal_RN(config.init_state.init_pos[0]);
+	navstate.gravity = Cal_g_GRS80(config.init_state.init_pos[0], config.init_state.init_pos[2]);
 	return navstate;
 }

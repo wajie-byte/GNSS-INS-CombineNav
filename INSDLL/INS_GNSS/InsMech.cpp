@@ -2,6 +2,7 @@
 #include"../INS/Dynamic.h"
 #include"Param.h"
 #include"../BASE/DefData.h"
+#include "../INS/INS.h"
 
 
 
@@ -61,7 +62,7 @@ CombineNav::NavState CombineNav::InsMech(const CombineNav::NavState& laststate, 
 	//omega_ie_n_half = Cal_w_ie_n(r_half[0]);
 	Cal_w_ie_n(r_half[0], omega_ie_n_half);
 	//w_en_n_half = Cal_w_en_n(v_half[0], v_half[1], r_half[0], r_half[2]);
-	Cal_w_en_n(v_half[0], v_half[1], r_half[0], r_half[2], w_en_n_half);
+	Cal_w_en_n(v_half[1], v_half[0], r_half[0], r_half[2], w_en_n_half);
 	//zeta_k=(omega_ie_n_half + w_en_n_half) * interval;
 	for(int i=0; i < 3; i++)
 	{
@@ -95,10 +96,12 @@ CombineNav::NavState CombineNav::InsMech(const CombineNav::NavState& laststate, 
 	//update height
 	double rk[3] = { 0.0,0.0,0.0 };
 	rk[2] = Cal_h_k(r_k_1[2], v_k_1[2], v_k[2], interval);
+	double mean_h = (rk[2] + r_k_1[2]) / 2;
 	//update latitude
-	rk[0] = Cal_lat_k(r_k_1[0], v_k_1[0], v_k[0], rk[2], interval);
+	rk[0] = Cal_lat_k(r_k_1[0], v_k_1[0], v_k[0], mean_h, interval);
+	double mean_phi = (rk[0] + r_k_1[0]) / 2;
 	//update longitude
-	rk[1] = Cal_lon_k(r_k_1[1], v_k_1[1], v_k[1], rk[0], rk[2], interval);
+	rk[1] = Cal_lon_k(r_k_1[1], v_k_1[1], v_k[1], mean_phi, mean_h, interval);
 
 
 	//update new value
@@ -115,10 +118,77 @@ CombineNav::NavState CombineNav::InsMech(const CombineNav::NavState& laststate, 
 	}
 	navstate.qbn = qbn_k;
 	navstate.Cbn = quaternion2C_b_n(navstate.qbn);
-	quaternion2euler(navstate.qbn, navstate.att[0], navstate.att[1], navstate.att[2]);
+	quaternion2euler(navstate.qbn, navstate.att[2], navstate.att[1], navstate.att[0]);
 	navstate.Rm = Cal_RM(navstate.pos[0]);
 	navstate.Rn = Cal_RN(navstate.pos[0]);
 	navstate.gravity = Cal_g_GRS80(navstate.pos[0], navstate.pos[2]);
 	return navstate;
 	//end
+}
+
+
+
+void CombineNav::Test_InsMech(const std::vector<INS::IMUDataEpoch>& imudata, const INS::IMUResultEpoch& imustart,
+	std::vector<INS::IMUResultEpoch>& imuresult)
+{
+	//寻找初始数据索引
+	int index_start = -1;
+	bool found = FindInitialIndex(imudata, imustart.time, index_start);
+	if (!found)
+	{
+		std::cout << "Initial time not found in IMU data." << std::endl;
+		return;
+	}
+	//初始化变量
+	double dt = 0.0; //采样间隔
+
+	INS::IMUDataEpoch lastimu = imudata[index_start];
+
+	CombineNav::NavState laststate;
+	laststate.time = imustart.time;
+	for (int i = 0; i < 3; i++)
+	{
+		laststate.pos[i] = imustart.BLH[i];
+		laststate.vel[i] = imustart.Vn[i];
+		laststate.att[i] = imustart.YPR[2 - i];
+	}
+	laststate.qbn = euler2quaternion(laststate.att[2], laststate.att[1], laststate.att[0]);
+	laststate.Cbn = quaternion2C_b_n(laststate.qbn);
+	laststate.Rm = Cal_RM(laststate.pos[0]);
+	laststate.Rn = Cal_RN(laststate.pos[0]);
+	laststate.gravity = Cal_g_GRS80(laststate.pos[0], laststate.pos[2]);
+
+
+	CombineNav::NavState navstate;
+
+	//保存初始时刻结果
+	INS::IMUResultEpoch imuresult_epoch;
+	INS::IMUDataEpoch thisimu;
+
+	int lastpercent = -1; //上次处理进度百分比
+	std::cout << "Starting INS mechanical update test...\n";
+	//递推更新
+	for (size_t k = index_start + 1; k < imudata.size(); k++)
+	{
+		thisimu = imudata[k];
+		navstate = InsMech(laststate, lastimu, thisimu);
+		imuresult_epoch.time = navstate.time;
+		for (int i = 0; i < 3; i++)
+		{
+			imuresult_epoch.BLH[i] = navstate.pos[i];
+			imuresult_epoch.Vn[i] = navstate.vel[i];
+			imuresult_epoch.YPR[2 - i] = navstate.att[i];
+		}
+		imuresult.push_back(imuresult_epoch);
+		lastimu = thisimu;
+		laststate = navstate;
+		//print processing information
+		int current_percent = (int)(100.0 * (k - index_start) / (imudata.size() - index_start));
+		if (current_percent > lastpercent)
+		{
+			std::cout << "Processing: " << current_percent << "%\n";
+			lastpercent = current_percent;
+		}
+	}
+	std::cout << "INS mechanical update test completed.\n";
 }

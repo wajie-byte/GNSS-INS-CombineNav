@@ -1,15 +1,15 @@
-#include <cmath>
+ï»¿#include <cmath>
 #include"../BASE/DefData.h"
 #include"Dynamic.h"
 
 
-//¼ÆËãGRS80µØÇòÍÖÇòÄ£ĞÍµÄÕı³£ÖØÁ¦¹«Ê½
+//è®¡ç®—GRS80åœ°çƒæ¤­çƒæ¨¡å‹çš„æ­£å¸¸é‡åŠ›å…¬å¼
 /*
 	In:
-	double lat			//Î³¶Èrad
-	double h			//¸ß³Ìm
+	double lat			//çº¬åº¦rad
+	double h			//é«˜ç¨‹m
 	Out:
-	double g			//Õı³£ÖØÁ¦m/s^2
+	double g			//æ­£å¸¸é‡åŠ›m/s^2
 */
 double Cal_g_GRS80(double lat, double h)
 {
@@ -19,24 +19,24 @@ double Cal_g_GRS80(double lat, double h)
 	return g0 + g1 + g2;
 }
 
-//¼ÆËã×ËÌ¬¾ØÕóC_b^n
+//è®¡ç®—å§¿æ€çŸ©é˜µC_b^n
 /*
 In:
-	double Yaw			//º½Ïò½Çrad
-	double Pitch		//¸©Ñö½Çrad		
-	double Roll			//ºá¹ö½Çrad	
+	double Yaw			//èˆªå‘è§’rad
+	double Pitch		//ä¿¯ä»°è§’rad		
+	double Roll			//æ¨ªæ»šè§’rad	
 Out:
-	Mat C_b^n			//×ËÌ¬¾ØÕó,bÎªÏÂ±ê£¬nÎªÉÏ±ê(3x3)
+	Mat C_b^n			//å§¿æ€çŸ©é˜µ,bä¸ºä¸‹æ ‡ï¼Œnä¸ºä¸Šæ ‡(3x3)
 */
 Mat Cal_C_b_n(double Yaw,double Pitch,double Roll)
 {
-	//ÓÃa,b,c´æ´¢×ËÌ¬½Ç£¬·½±ã±àĞ´¼ÆËã¹«Ê½
+	//ç”¨a,b,cå­˜å‚¨å§¿æ€è§’ï¼Œæ–¹ä¾¿ç¼–å†™è®¡ç®—å…¬å¼
 	double a = Pitch;
 	double b = Roll;
 	double c = Yaw;
-	//¶¨Òå×ËÌ¬¾ØÕó
+	//å®šä¹‰å§¿æ€çŸ©é˜µ
 	Mat C_b_n(3, 3);
-	//×ËÌ¬¾ØÕóÔªËØ¼ÆËã
+	//å§¿æ€çŸ©é˜µå…ƒç´ è®¡ç®—
 	C_b_n(0, 0) = cos(a) * cos(c);
 	C_b_n(0, 1) = -cos(b) * sin(c) + sin(b) * sin(a) * cos(c);
 	C_b_n(0, 2) = sin(b) * sin(c) + cos(b) * sin(a) * cos(c);
@@ -46,34 +46,34 @@ Mat Cal_C_b_n(double Yaw,double Pitch,double Roll)
 	C_b_n(2, 0) = -sin(a);
 	C_b_n(2, 1) = sin(b) * cos(a);
 	C_b_n(2, 2) = cos(b) * cos(a);
-	//·µ»Ø×ËÌ¬¾ØÕó
+	//è¿”å›å§¿æ€çŸ©é˜µ
 	return C_b_n;
 }
 
-//×ËÌ¬½Ç×ªËÄÔªÊı
+//å§¿æ€è§’è½¬å››å…ƒæ•°
 /*
 In:
-	double Yaw			//º½Ïò½Çrad
-	double Pitch		//¸©Ñö½Çrad
-	double Roll			//ºá¹ö½Çrad
+	double Yaw			//èˆªå‘è§’rad
+	double Pitch		//ä¿¯ä»°è§’rad
+	double Roll			//æ¨ªæ»šè§’rad
 Out:
-	Mat q_b_n			//ËÄÔªÊı,bÎªÏÂ±ê£¬nÎªÉÏ±ê(4x1)
+	Mat q_b_n			//å››å…ƒæ•°,bä¸ºä¸‹æ ‡ï¼Œnä¸ºä¸Šæ ‡(4x1)
 */
 Mat euler2quaternion(double Yaw, double Pitch, double Roll)
 {
-	//¼ÆËã°ë±¶Å·À­½Ç¶ÔÓ¦µÄÕıÏÒÓàÏÒÖµ
+	//è®¡ç®—åŠå€æ¬§æ‹‰è§’å¯¹åº”çš„æ­£å¼¦ä½™å¼¦å€¼
 	double cy = cos(Yaw / 2); double sy = sin(Yaw / 2);
 	double cp = cos(Pitch / 2); double sp = sin(Pitch / 2);
 	double cr = cos(Roll / 2); double sr = sin(Roll / 2);
-	//²Î¿¼×ø±êÏµnÈÆz-y-xĞı×ªµ½ÔØÌå×ø±êÏµnµÄ×ËÌ¬ËÄÔªÊı
+	//å‚è€ƒåæ ‡ç³»nç»•z-y-xæ—‹è½¬åˆ°è½½ä½“åæ ‡ç³»nçš„å§¿æ€å››å…ƒæ•°
 	//q_b^n=q_z*q_y*q_x
 	Mat q_b_n(4, 1);
-	//ÔªËØ¼ÆËã
+	//å…ƒç´ è®¡ç®—
 	double qw = cr * cp * cy + sr * sp * sy;
 	double qx = sr * cp * cy - cr * sp * sy;
 	double qy = cr * sp * cy + sr * cp * sy;
 	double qz = -sr * sp * cy + cr * cp * sy;
-	//¹éÒ»»¯
+	//å½’ä¸€åŒ–
 	double norm = sqrt(qw * qw + qx * qx + qy * qy + qz * qz);
 	qw = qw / norm;
 	qx = qx / norm;
@@ -84,27 +84,27 @@ Mat euler2quaternion(double Yaw, double Pitch, double Roll)
 	q_b_n(2, 0) = qy;
 	q_b_n(3, 0) = qz;
 	
-	//·µ»ØËÄÔªÊı
+	//è¿”å›å››å…ƒæ•°
 	return q_b_n;
 }
 
-//ËÄÔªÊı×ª×ËÌ¬¾ØÕó
+//å››å…ƒæ•°è½¬å§¿æ€çŸ©é˜µ
 /*
 In:
-	Mat q_b_n			//ËÄÔªÊı,bÎªÏÂ±ê£¬nÎªÉÏ±ê(4x1)
+	Mat q_b_n			//å››å…ƒæ•°,bä¸ºä¸‹æ ‡ï¼Œnä¸ºä¸Šæ ‡(4x1)
 Out:
-	Mat C_b^n			//×ËÌ¬¾ØÕó,bÎªÏÂ±ê£¬nÎªÉÏ±ê(3x3)
+	Mat C_b^n			//å§¿æ€çŸ©é˜µ,bä¸ºä¸‹æ ‡ï¼Œnä¸ºä¸Šæ ‡(3x3)
 */
 Mat quaternion2C_b_n(Mat q_b_n)
 {
-	//»ñÈ¡ËÄÔªÊıËÄ¸öÔªµÄÖµ½øĞĞÇó½â
+	//è·å–å››å…ƒæ•°å››ä¸ªå…ƒçš„å€¼è¿›è¡Œæ±‚è§£
 	double qw = q_b_n(0, 0);
 	double qx = q_b_n(1, 0);
 	double qy = q_b_n(2, 0);
 	double qz = q_b_n(3, 0);
-	//¶¨Òå×ËÌ¬¾ØÕó
+	//å®šä¹‰å§¿æ€çŸ©é˜µ
 	Mat C_b_n(3, 3);
-	//ÕâÀïÊ¡ÂÔËÄÔªÊı×ª»»Îª×ËÌ¬¾ØÕóµÄ¹ı³Ì£¬Ö±½ÓÓÃ½áÂÛ
+	//è¿™é‡Œçœç•¥å››å…ƒæ•°è½¬æ¢ä¸ºå§¿æ€çŸ©é˜µçš„è¿‡ç¨‹ï¼Œç›´æ¥ç”¨ç»“è®º
 	C_b_n(0, 0) = 1 - 2 * (qy * qy + qz * qz);
 	C_b_n(0, 1) = 2 * (qx * qy - qw * qz);
 	C_b_n(0, 2) = 2 * (qx * qz + qw * qy);
@@ -114,28 +114,28 @@ Mat quaternion2C_b_n(Mat q_b_n)
 	C_b_n(2, 0) = 2 * (qx * qz - qw * qy);
 	C_b_n(2, 1) = 2 * (qy * qz + qw * qx);
 	C_b_n(2, 2) = 1 - 2 * (qx * qx + qy * qy);
-	//·µ»Ø×ËÌ¬¾ØÕó
+	//è¿”å›å§¿æ€çŸ©é˜µ
 	return C_b_n;
 }
 
-//ËÄÔªÊı×ª×ËÌ¬½Ç
+//å››å…ƒæ•°è½¬å§¿æ€è§’
 /*
 In:
-	Mat q_b_n			//ËÄÔªÊı,bÎªÏÂ±ê£¬nÎªÉÏ±ê(4x1)
+	Mat q_b_n			//å››å…ƒæ•°,bä¸ºä¸‹æ ‡ï¼Œnä¸ºä¸Šæ ‡(4x1)
 	
 Out:
-	double Yaw			//º½Ïò½Çrad
-	double Pitch		//¸©Ñö½Çrad
-	double Roll			//ºá¹ö½Çrad		
+	double Yaw			//èˆªå‘è§’rad
+	double Pitch		//ä¿¯ä»°è§’rad
+	double Roll			//æ¨ªæ»šè§’rad		
 */
 void quaternion2euler(Mat q_b_n, double& Yaw, double& Pitch, double& Roll)
 {
-	//»ñÈ¡ËÄÔªÊıËÄ¸öÔªµÄÖµ½øĞĞÇó½â
+	//è·å–å››å…ƒæ•°å››ä¸ªå…ƒçš„å€¼è¿›è¡Œæ±‚è§£
 	double qw = q_b_n(0, 0);
 	double qx = q_b_n(1, 0);
 	double qy = q_b_n(2, 0);
 	double qz = q_b_n(3, 0);
-	//ÕâÀïÊ¡ÂÔËÄÔªÊı×ª»»Îª×ËÌ¬¾ØÕóµÄ¹ı³Ì£¬Ö±½ÓÓÃ½áÂÛ
+	//è¿™é‡Œçœç•¥å››å…ƒæ•°è½¬æ¢ä¸ºå§¿æ€çŸ©é˜µçš„è¿‡ç¨‹ï¼Œç›´æ¥ç”¨ç»“è®º
 	double c31 = 2 * (qx * qz - qw * qy);
 	double c32 = 2 * (qy * qz + qw * qx);
 	double c33 = 1 - 2 * (qx * qx + qy * qy);
@@ -143,35 +143,35 @@ void quaternion2euler(Mat q_b_n, double& Yaw, double& Pitch, double& Roll)
 	double c11 = 1 - 2 * (qy * qy + qz * qz);
 	
 
-	// ¼ÆËã³õÊ¼Å·À­½Ç
+	// è®¡ç®—åˆå§‹æ¬§æ‹‰è§’
 	double pitch = atan2(-c31, sqrt(c32 * c32 + c33 * c33));
 	double roll = atan2(c32, c33);
 	double yaw = atan2(c21, c11);
 
-	// ÍòÏò½ÚËø´¦Àí£¨¸©Ñö½Ç½Ó½ü¡À90¡ã£©
+	// ä¸‡å‘èŠ‚é”å¤„ç†ï¼ˆä¿¯ä»°è§’æ¥è¿‘Â±90Â°ï¼‰
 	const double EPS = 1e-6;
 	bool is_gimbal_lock = (fabs(c31) > 1 - EPS);
 	if (is_gimbal_lock)
 	{
-		// ÍòÏò½ÚËøÇé¿ö£º°´ÕÕ¹ßÀıÉèÖÃRoll=0
+		// ä¸‡å‘èŠ‚é”æƒ…å†µï¼šæŒ‰ç…§æƒ¯ä¾‹è®¾ç½®Roll=0
 		roll = 0.0;
-		// ÕıÈ·µÄÍòÏò½ÚËøYaw¼ÆËã¹«Ê½
+		// æ­£ç¡®çš„ä¸‡å‘èŠ‚é”Yawè®¡ç®—å…¬å¼
 		if (pitch > 0) 
 		{
 			yaw = 2 * atan2(qx, qw);
 		}
-		// µ±¸©Ñö½ÇÎª-90¡ãÊ±  
+		// å½“ä¿¯ä»°è§’ä¸º-90Â°æ—¶  
 		else 
 		{
 			yaw = -2 * atan2(qx, qw);
 		}
 	}
 
-	// ½Ç¶È¹æ·¶»¯
+	// è§’åº¦è§„èŒƒåŒ–
 	roll = normalize_angle(roll);
 	yaw = normalize_angle(yaw);
 
-	// pitchÒÑ¾­ÔÚÕıÈ··¶Î§ÄÚ£¬µ«Èç¹ûÓĞÊıÖµÎó²î¿ÉÒÔÉÔÎ¢Ô¼Êø
+	// pitchå·²ç»åœ¨æ­£ç¡®èŒƒå›´å†…ï¼Œä½†å¦‚æœæœ‰æ•°å€¼è¯¯å·®å¯ä»¥ç¨å¾®çº¦æŸ
 	if (pitch > pi / 2)
 	{
 		pitch = pi / 2;
@@ -181,82 +181,92 @@ void quaternion2euler(Mat q_b_n, double& Yaw, double& Pitch, double& Roll)
 		pitch = -pi / 2;
 	}
 
-	// Êä³ö
+	// è¾“å‡º
 	Roll = roll;
 	Pitch = pitch;
 	Yaw = yaw;
 }
 
-//¼ÆËã²æ³Ëc=axb
+//è®¡ç®—å‰ä¹˜c=axb
 /*
 In:
-	double a[3]		//aÏòÁ¿
-	double b[3]		//bÏòÁ¿
+	double a[3]		//aå‘é‡
+	double b[3]		//bå‘é‡
 Out:
-	double c[3]		//²æ³ËÏòÁ¿
+	double c[3]		//å‰ä¹˜å‘é‡
 */
-void cross_3_1(const double a[3], const double b[3], double c[3])//×¢ÒâÏòÁ¿²æ³ËµÄË³ĞòÎªaxb
+void cross_3_1(const double a[3], const double b[3], double c[3])//æ³¨æ„å‘é‡å‰ä¹˜çš„é¡ºåºä¸ºaxb
 {
 	c[0] = -a[2] * b[1] + a[1] * b[2];
 	c[1] = a[2] * b[0] - a[0] * b[2];
 	c[2] = -a[1] * b[0] + a[0] * b[1];
 }
 
-//¸ù¾İk-1Ê±¿ÌºÍkÊ±¿Ì½ÇÔöÁ¿¼ÆËãbÏµÏà¶ÔiÏµ×ª¶¯µÄµÈĞ§Ğı×ªÊ¸Á¿
+//æ ¹æ®k-1æ—¶åˆ»å’Œkæ—¶åˆ»è§’å¢é‡è®¡ç®—bç³»ç›¸å¯¹iç³»è½¬åŠ¨çš„ç­‰æ•ˆæ—‹è½¬çŸ¢é‡
 /*
 In:
-	double groy_k_1[3]		//k-1Ê±¿Ì½ÇÔöÁ¿rad
-	double groy_k[3]		//kÊ±¿Ì½ÇÔöÁ¿rad
+	double groy_k_1[3]		//k-1æ—¶åˆ»è§’å¢é‡rad
+	double groy_k[3]		//kæ—¶åˆ»è§’å¢é‡rad
 Out:
-	double ERV[3]			//bÏµÏà¶ÔiÏµ×ª¶¯µÄµÈĞ§Ğı×ªÊ¸Á¿rad
+	double ERV[3]			//bç³»ç›¸å¯¹iç³»è½¬åŠ¨çš„ç­‰æ•ˆæ—‹è½¬çŸ¢é‡rad
 */
 void Cal_ERV_ib(const double groy_k_1[3], const double groy_k[3], double ERV[3])
 {
-	//¼ÆËã¶ş½×Ô²×¶Îó²î²¹³¥Ïî
+	//è®¡ç®—äºŒé˜¶åœ†é”¥è¯¯å·®è¡¥å¿é¡¹
 	double groy_cross[3] = { 0.0,0.0,0.0 };
-	//k-1Ïî²æ³ËkÏî
+	//k-1é¡¹å‰ä¹˜ké¡¹
 	cross_3_1(groy_k_1, groy_k, groy_cross);
-	//¼ÆËãµÈĞ§Ğı×ªÊ¸Á¿
+	//è®¡ç®—ç­‰æ•ˆæ—‹è½¬çŸ¢é‡
 	for (int i = 0; i < 3; i++)
 	{
 		ERV[i] = groy_k[i] + groy_cross[i] / 12;
 	}
 }
 
-//¸ù¾İµÈĞ§Ğı×ªÊ¸Á¿Õı×ª×ËÌ¬±ä»¯µÄËÄÔªÊı
+//æ ¹æ®ç­‰æ•ˆæ—‹è½¬çŸ¢é‡æ­£è½¬å§¿æ€å˜åŒ–çš„å››å…ƒæ•°
 /*
 In:
-	double ERV[3]			//µÈĞ§Ğı×ªÊ¸Á¿
+	double ERV[3]			//ç­‰æ•ˆæ—‹è½¬çŸ¢é‡
 Out:
-	Mat q_b_rotate			//×ËÌ¬±ä»¯(4x1)			
+	Mat q_b_rotate			//å§¿æ€å˜åŒ–(4x1)			
 */
 Mat Cal_pos_rotate(const double ERV[3])
 {
-	//È¡µÈĞ§Ğı×ªÊ¸Á¿µÄÒ»°ë
-	double half_ERV[3]= { 0.0,0.0,0.0 };
-	for (int i = 0; i < 3; i++)
-	{
-		half_ERV[i] = ERV[i] / 2;
-	}
-	//¼ÆËãÅ·¼¸ÀïµÃ·¶Êı
-	double norm = sqrt(half_ERV[0] * half_ERV[0] + half_ERV[1] * half_ERV[1] + half_ERV[2] * half_ERV[2]);
-	//×ËÌ¬±ä»¯ËÄÔªÊı
+	double angle = sqrt(ERV[0] * ERV[0] + ERV[1] * ERV[1] + ERV[2] * ERV[2]);
+
 	Mat q_b_rotate(4, 1);
-	q_b_rotate(0, 0) = cos(norm);
-	q_b_rotate(1, 0) = sin(norm) / norm * half_ERV[0];
-	q_b_rotate(2, 0) = sin(norm) / norm * half_ERV[1];
-	q_b_rotate(3, 0) = sin(norm) / norm * half_ERV[2];
+
+	const double eps = 0.000005;  
+	if (angle < eps)
+	{
+		// å°è§’åº¦è¿‘ä¼¼
+		q_b_rotate(0, 0) = 1.0 - angle * angle / 8.0;  // cos(angle/2) çš„æ³°å‹’å±•å¼€
+		double half_angle = angle / 2.0;
+		double scale = 0.5;  // sin(angle/2)/angle åœ¨ angleâ†’0 æ—¶çš„æé™
+		q_b_rotate(1, 0) = scale * ERV[0];
+		q_b_rotate(2, 0) = scale * ERV[1];
+		q_b_rotate(3, 0) = scale * ERV[2];
+	}
+	else
+	{
+		q_b_rotate(0, 0) = cos(angle / 2.0);
+		double scale = sin(angle / 2.0) / angle;
+		q_b_rotate(1, 0) = scale * ERV[0];
+		q_b_rotate(2, 0) = scale * ERV[1];
+		q_b_rotate(3, 0) = scale * ERV[2];
+	}
+
 	q_b_rotate = quaternion_normalize(q_b_rotate);
 	return q_b_rotate;
 }
 
 
-//¸ù¾İµ±µØÎ³¶È¼ÆËã»ı·ÖÇø¼äµØÇò×Ô×ª½ÇËÙ¶ÈÔÚnÏµÏÂµÄÍ¶Ó°
+//æ ¹æ®å½“åœ°çº¬åº¦è®¡ç®—ç§¯åˆ†åŒºé—´åœ°çƒè‡ªè½¬è§’é€Ÿåº¦åœ¨nç³»ä¸‹çš„æŠ•å½±
 /*
 In:
-	double lat					//µ±µØÎ³¶Èrad
+	double lat					//å½“åœ°çº¬åº¦rad
 Out:
-	double w_ie_n[3]			//µØÇò×Ô×ª½ÇËÙ¶ÈÔÚnÏµÏÂÍ¶Ó°,ieÎªÏÂ±ê£¬nÎªÉÏ±ê,rad/s
+	double w_ie_n[3]			//åœ°çƒè‡ªè½¬è§’é€Ÿåº¦åœ¨nç³»ä¸‹æŠ•å½±,ieä¸ºä¸‹æ ‡ï¼Œnä¸ºä¸Šæ ‡,rad/s
 */
 void Cal_w_ie_n(double lat, double w_ie_n[3])
 {
@@ -266,72 +276,72 @@ void Cal_w_ie_n(double lat, double w_ie_n[3])
 }
 
 
-//¸ù¾İµ±µØÎ³¶ÈÎ»ÒÆ½ÇËÙ¶ÈÔÚnÏµÏÂµÄÍ¶Ó°
+//æ ¹æ®å½“åœ°çº¬åº¦ä½ç§»è§’é€Ÿåº¦åœ¨nç³»ä¸‹çš„æŠ•å½±
 /*
 In:
-	double vE					//¶«ÏòËÙ¶Èm/s
-	double vN					//±±ÏòËÙ¶Èm/s
-	double lat					//µ±µØÎ³¶Èrad
-	double h					//µ±µØ¸ß³Ìm
+	double vE					//ä¸œå‘é€Ÿåº¦m/s
+	double vN					//åŒ—å‘é€Ÿåº¦m/s
+	double lat					//å½“åœ°çº¬åº¦rad
+	double h					//å½“åœ°é«˜ç¨‹m
 Out:
-	double w_en_n[3]			//Î»ÒÆ½ÇËÙ¶ÈÔÚnÏµÏÂÍ¶Ó°,enÎªÏÂ±ê£¬nÎªÉÏ±ê,rad/s
+	double w_en_n[3]			//ä½ç§»è§’é€Ÿåº¦åœ¨nç³»ä¸‹æŠ•å½±,enä¸ºä¸‹æ ‡ï¼Œnä¸ºä¸Šæ ‡,rad/s
 */
 void Cal_w_en_n(double vE, double vN, double lat, double h, double w_en_n[3])
 {
-	//¼ÆËã×ÓÎçÈ¦ºÍÃ®ÓÏÈ¦°ë¾¶
+	//è®¡ç®—å­åˆåœˆå’Œå¯é…‰åœˆåŠå¾„
 	double RM = Cal_RM(lat);
 	double RN = Cal_RN(lat);
-	//¼ÆËãÍ¶Ó°·ÖÁ¿
+	//è®¡ç®—æŠ•å½±åˆ†é‡
 	w_en_n[0] = vE / (RN + h);
 	w_en_n[1] = -vN / (RM + h);
 	w_en_n[2] = -vE * tan(lat) / (RN + h);
 }
 
-//¸ù¾İµ±µØÎ³¶È¼ÆËã×ÓÎçÈ¦°ë¾¶
+//æ ¹æ®å½“åœ°çº¬åº¦è®¡ç®—å­åˆåœˆåŠå¾„
 /*
 In:
-	double lat					//µ±µØÎ³¶Èrad
+	double lat					//å½“åœ°çº¬åº¦rad
 Out:
-	double RM					//×ÓÎçÈ¦°ë¾¶m
+	double RM					//å­åˆåœˆåŠå¾„m
 */
 double Cal_RM(double lat)
 {
-	//»ñÈ¡ÍÖÇò³¤°ëÖáºÍ±âÂÊ
-	double a = WGS84_a;//³¤°ëÖám
-	double e2 = WGS84_e1_2;//±âÂÊ
-	//¼ÆËãRM
+	//è·å–æ¤­çƒé•¿åŠè½´å’Œæ‰ç‡
+	double a = WGS84_a;//é•¿åŠè½´m
+	double e2 = WGS84_e1_2;//æ‰ç‡
+	//è®¡ç®—RM
 	double RM_1 = a * (1 - e2);
 	double RM_2 = 1 - e2* sin(lat) * sin(lat);
 	double RM = RM_1 / sqrt(RM_2 * RM_2 * RM_2);
 	return RM;
 }
-//¸ù¾İµ±µØÎ³¶È¼ÆËãÃ®ÓÏÈ¦°ë¾¶
+//æ ¹æ®å½“åœ°çº¬åº¦è®¡ç®—å¯é…‰åœˆåŠå¾„
 /*
 In:
-	double lat					//µ±µØÎ³¶Èrad
+	double lat					//å½“åœ°çº¬åº¦rad
 Out:
-	double RN					//Ã®ÓÏÈ¦°ë¾¶m
+	double RN					//å¯é…‰åœˆåŠå¾„m
 */
 double Cal_RN(double lat)
 {
-	//»ñÈ¡ÍÖÇò³¤°ëÖáºÍ±âÂÊ
-	double a = WGS84_a;//³¤°ëÖám
-	double e2 = WGS84_e1_2;//±âÂÊ
-	//¼ÆËãRN
+	//è·å–æ¤­çƒé•¿åŠè½´å’Œæ‰ç‡
+	double a = WGS84_a;//é•¿åŠè½´m
+	double e2 = WGS84_e1_2;//æ‰ç‡
+	//è®¡ç®—RN
 	double RN_1 = 1 - e2 * sin(lat) * sin(lat);
 	double RN = a / sqrt(RN_1);
 	return RN;
 }
 
-//»ı·ÖÇø¼ä[tk-1,tk]ÖĞ¼äÊ±¿Ìtk-1/2
-//¸ù¾İµØÇò×Ô×ª½ÇËÙ¶ÈºÍÎ»ÒÆ½ÇËÙ¶È¼ÆËãnÏµÏà¶ÔiÏµ×ª¶¯µÄµÈĞ§Ğı×ªÊ¸Á¿
+//ç§¯åˆ†åŒºé—´[tk-1,tk]ä¸­é—´æ—¶åˆ»tk-1/2
+//æ ¹æ®åœ°çƒè‡ªè½¬è§’é€Ÿåº¦å’Œä½ç§»è§’é€Ÿåº¦è®¡ç®—nç³»ç›¸å¯¹iç³»è½¬åŠ¨çš„ç­‰æ•ˆæ—‹è½¬çŸ¢é‡
 /*
 In:
-	double w_ie_n_mid[3]		//tk-1/2Ê±¿ÌµØÇò×Ô×ª½ÇËÙ¶ÈÏòÁ¿rad/s
-	double w_en_n_mid[3]		//tk-1/2Ê±¿ÌÎ»ÒÆ½ÇËÙ¶ÈÏòÁ¿rad/s
-	double dt					//²ÉÑù¼ä¸ôs
+	double w_ie_n_mid[3]		//tk-1/2æ—¶åˆ»åœ°çƒè‡ªè½¬è§’é€Ÿåº¦å‘é‡rad/s
+	double w_en_n_mid[3]		//tk-1/2æ—¶åˆ»ä½ç§»è§’é€Ÿåº¦å‘é‡rad/s
+	double dt					//é‡‡æ ·é—´éš”s
 Out:
-	double ERV[3]				//nÏµÏà¶ÔiÏµ×ª¶¯µÄµÈĞ§Ğı×ªÊ¸Á¿rad
+	double ERV[3]				//nç³»ç›¸å¯¹iç³»è½¬åŠ¨çš„ç­‰æ•ˆæ—‹è½¬çŸ¢é‡rad
 */
 void Cal_ERV_in(const double w_ie_n_mid[3], const double w_en_n_mid[3], double dt, double ERV[3])
 {
@@ -341,45 +351,59 @@ void Cal_ERV_in(const double w_ie_n_mid[3], const double w_en_n_mid[3], double d
 	}
 }
 
-//¸ù¾İµÈĞ§Ğı×ªÊ¸Á¿·´×ª×ËÌ¬±ä»¯µÄËÄÔªÊı
+//æ ¹æ®ç­‰æ•ˆæ—‹è½¬çŸ¢é‡åè½¬å§¿æ€å˜åŒ–çš„å››å…ƒæ•°
 /*
 In:
-	double ERV[3]			//µÈĞ§Ğı×ªÊ¸Á¿rad
+	double ERV[3]			//ç­‰æ•ˆæ—‹è½¬çŸ¢é‡rad
 Out:
-	Mat q_n_rotate			//Ïµ×ËÌ¬±ä»¯(4x1)
+	Mat q_n_rotate			//ç³»å§¿æ€å˜åŒ–(4x1)
 */
 Mat Cal_neg_rotate(const double ERV[3])
 {
-	//È¡µÈĞ§Ğı×ªÊ¸Á¿µÄÒ»°ë
-	double half_ERV[3] = { 0.0,0.0,0.0 };
-	for (int i = 0; i < 3; i++)
-	{
-		half_ERV[i] = ERV[i] / 2;
-	}
-	//¼ÆËãÅ·¼¸ÀïµÃ·¶Êı
-	double norm = sqrt(half_ERV[0] * half_ERV[0] + half_ERV[1] * half_ERV[1] + half_ERV[2] * half_ERV[2]);
-	//¼ÆËãnÏµ×ËÌ¬±ä»¯ËÄÔªÊı
+	// è®¡ç®—æ€»è§’åº¦
+	double angle = sqrt(ERV[0] * ERV[0] + ERV[1] * ERV[1] + ERV[2] * ERV[2]);
+
 	Mat q_n_rotate(4, 1);
-	q_n_rotate(0, 0) = cos(norm);
-	q_n_rotate(1, 0) = -sin(norm) / norm * half_ERV[0];
-	q_n_rotate(2, 0) = -sin(norm) / norm * half_ERV[1];
-	q_n_rotate(3, 0) = -sin(norm) / norm * half_ERV[2];
+
+	const double eps = 0.000005;  // å°è§’åº¦é˜ˆå€¼
+
+	if (angle < eps)
+	{
+		// å°è§’åº¦è¿‘ä¼¼ï¼ˆåè½¬: çŸ¢é‡éƒ¨åˆ†å–è´Ÿï¼‰
+		// cos(angle/2) â‰ˆ 1 - angleÂ²/8
+		q_n_rotate(0, 0) = 1.0 - angle * angle / 8.0;
+		// sin(angle/2)/angle â‰ˆ 0.5
+		double scale = -0.5;  // è´Ÿå·è¡¨ç¤ºåè½¬
+		q_n_rotate(1, 0) = scale * ERV[0];
+		q_n_rotate(2, 0) = scale * ERV[1];
+		q_n_rotate(3, 0) = scale * ERV[2];
+	}
+	else
+	{
+		// æ­£å¸¸è®¡ç®—ï¼ˆçŸ¢é‡éƒ¨åˆ†å–è´Ÿï¼‰
+		q_n_rotate(0, 0) = cos(angle / 2.0);
+		double scale = -sin(angle / 2.0) / angle;
+		q_n_rotate(1, 0) = scale * ERV[0];
+		q_n_rotate(2, 0) = scale * ERV[1];
+		q_n_rotate(3, 0) = scale * ERV[2];
+	}
+
 	q_n_rotate = quaternion_normalize(q_n_rotate);
 	return q_n_rotate;
 }
 
-//ËÄÔªÊı³Ë·¨
+//å››å…ƒæ•°ä¹˜æ³•
 /*
 In:
-	Mat a			//ËÄÔªÊıa(4x1)
-	Mat b			//ËÄÔªÊıb(4x1)
+	Mat a			//å››å…ƒæ•°a(4x1)
+	Mat b			//å››å…ƒæ•°b(4x1)
 Out:
-	Mat c			//ËÄÔªÊıc(4x1)
+	Mat c			//å››å…ƒæ•°c(4x1)
 */
 Mat quaternion_multiply(Mat a, Mat b)
 {
 	Mat c(4, 1);
-	//¶¨Òåd(4x4)¸¨Öú¼ÆËã
+	//å®šä¹‰d(4x4)è¾…åŠ©è®¡ç®—
 	Mat d(4, 4);
 	d(0, 0) = a(0, 0); d(0, 1) = -a(1, 0); d(0, 2) = -a(2, 0); d(0, 3) = -a(3, 0);
 	d(1, 0) = a(1, 0); d(1, 1) = a(0, 0); d(1, 2) = -a(3, 0); d(1, 3) = a(2, 0);
@@ -390,14 +414,14 @@ Mat quaternion_multiply(Mat a, Mat b)
 }
 
 
-//ËÄÔªÊıÁ´³ËÊµÏÖ×ËÌ¬¸üĞÂ
+//å››å…ƒæ•°é“¾ä¹˜å®ç°å§¿æ€æ›´æ–°
 /*
 In:
-	Mat q_bn_k_1			//k-1Ê±¿Ì×ËÌ¬ËÄÔªÊı(4x1)
-	Mat q_b_rotate			//k-1µ½kÊ±¿ÌbÏµ×ËÌ¬±ä»¯(4x1)
-	Mat q_n_rotate			//k-1µ½kÊ±¿ÌnÏµ×ËÌ¬±ä»¯(4x1)
+	Mat q_bn_k_1			//k-1æ—¶åˆ»å§¿æ€å››å…ƒæ•°(4x1)
+	Mat q_b_rotate			//k-1åˆ°kæ—¶åˆ»bç³»å§¿æ€å˜åŒ–(4x1)
+	Mat q_n_rotate			//k-1åˆ°kæ—¶åˆ»nç³»å§¿æ€å˜åŒ–(4x1)
 Out:
-	Mat q_bn_k				//kÊ±¿Ì×ËÌ¬ËÄÔªÊı(4x1)
+	Mat q_bn_k				//kæ—¶åˆ»å§¿æ€å››å…ƒæ•°(4x1)
 */
 Mat Attupdate_quaternion(Mat q_n_rotate, Mat q_bn_k_1, Mat q_b_rotate)
 {
@@ -409,13 +433,13 @@ Mat Attupdate_quaternion(Mat q_n_rotate, Mat q_bn_k_1, Mat q_b_rotate)
 	return q_bn_k;
 }
 
-//ËÄÔªÊı¹éÒ»»¯
+//å››å…ƒæ•°å½’ä¸€åŒ–
 /*
 In:
-	Mat a				//¹éÒ»»¯Ç°ËÄÔªÊı
+	Mat a				//å½’ä¸€åŒ–å‰å››å…ƒæ•°
 	
 Out:
-	Mat b				//¹éÒ»»¯ºóËÄÔªÊı
+	Mat b				//å½’ä¸€åŒ–åå››å…ƒæ•°
 */
 Mat quaternion_normalize(Mat a)
 {
@@ -428,14 +452,14 @@ Mat quaternion_normalize(Mat a)
 	return b;
 }
 
-//¼ÆËãÖØÁ¦¼ÓËÙ¶ÈÔÚnÏµÏÂµÄÍ¶Ó°
+//è®¡ç®—é‡åŠ›åŠ é€Ÿåº¦åœ¨nç³»ä¸‹çš„æŠ•å½±
 /*
 In:
-	double lat			//µ±µØÎ³¶Èrad
-	double h			//µ±µØ¸ß³Ìm
+	double lat			//å½“åœ°çº¬åº¦rad
+	double h			//å½“åœ°é«˜ç¨‹m
 
 Out:
-	double g_p_n[3]		//µ±µØÖØÁ¦¼ÓËÙ¶ÈÔÚnÏµÏÂµÄÍ¶Ó°m/s^2
+	double g_p_n[3]		//å½“åœ°é‡åŠ›åŠ é€Ÿåº¦åœ¨nç³»ä¸‹çš„æŠ•å½±m/s^2
 */
 void Cal_g_p_n(double lat, double h,double g_p_n[3])
 {
@@ -444,18 +468,18 @@ void Cal_g_p_n(double lat, double h,double g_p_n[3])
 	g_p_n[2] = g;
 }
 
-//¼ÆËãÖØÁ¦¸çÊÏ»ı·ÖÏî
-//ĞèÍâÍÆÊı¾İÖÁÊ±¿Ìtk-1/2
+//è®¡ç®—é‡åŠ›å“¥æ°ç§¯åˆ†é¡¹
+//éœ€å¤–æ¨æ•°æ®è‡³æ—¶åˆ»tk-1/2
 /*
 In:
-	double g_p_n_mid[3]			//µ±µØÖØÁ¦¼ÓËÙ¶ÈÔÚnÏµÏÂµÄÍ¶Ó°m/s^2
-	double w_ie_n_mid[3]		//tk-1/2Ê±¿ÌµØÇò×Ô×ª½ÇËÙ¶ÈÏòÁ¿rad/s
-	double w_en_n_mid[3]		//tk-1/2Ê±¿ÌÎ»ÒÆ½ÇËÙ¶ÈÏòÁ¿rad/s
-	double v_n_mid[3]			//tk-1/2Ê±¿ÌËÙ¶ÈÔÚnÏµÏÂÍ¶Ó°m/s
-	double dt					//²ÉÑù¼ä¸ôs
+	double g_p_n_mid[3]			//å½“åœ°é‡åŠ›åŠ é€Ÿåº¦åœ¨nç³»ä¸‹çš„æŠ•å½±m/s^2
+	double w_ie_n_mid[3]		//tk-1/2æ—¶åˆ»åœ°çƒè‡ªè½¬è§’é€Ÿåº¦å‘é‡rad/s
+	double w_en_n_mid[3]		//tk-1/2æ—¶åˆ»ä½ç§»è§’é€Ÿåº¦å‘é‡rad/s
+	double v_n_mid[3]			//tk-1/2æ—¶åˆ»é€Ÿåº¦åœ¨nç³»ä¸‹æŠ•å½±m/s
+	double dt					//é‡‡æ ·é—´éš”s
 
 Out:
-	double dv_gc_n[3]			//ÖØÁ¦¸çÊÏ»ı·ÖÏîm/s
+	double dv_gc_n[3]			//é‡åŠ›å“¥æ°ç§¯åˆ†é¡¹m/s
 */
 void Cal_dv_gc_n(const double g_p_n_mid[3], const double w_ie_n_mid[3], const double w_en_n_mid[3],
 	const double v_n_mid[3], double dt, double dv_gc_n[3])
@@ -473,52 +497,52 @@ void Cal_dv_gc_n(const double g_p_n_mid[3], const double w_ie_n_mid[3], const do
 	}
 }
 
-//¼ÆËãbÏµ±ÈÁ¦»ı·ÖÏî
-//ĞèÍâÍÆÊı¾İÖÁÊ±¿Ìtk-1/2
+//è®¡ç®—bç³»æ¯”åŠ›ç§¯åˆ†é¡¹
+//éœ€å¤–æ¨æ•°æ®è‡³æ—¶åˆ»tk-1/2
 /*
 In:
-	double groy_k_1[3]		//k-1Ê±¿Ì½ÇÔöÁ¿rad
-	double groy_k[3]		//kÊ±¿Ì½ÇÔöÁ¿rad
-	double dv_k_1[3]		//k-1Ê±¿ÌËÙ¶ÈÔöÁ¿m/s
-	double dv_k[3]			//kÊ±¿ÌËÙ¶ÈÔöÁ¿m/s
+	double groy_k_1[3]		//k-1æ—¶åˆ»è§’å¢é‡rad
+	double groy_k[3]		//kæ—¶åˆ»è§’å¢é‡rad
+	double dv_k_1[3]		//k-1æ—¶åˆ»é€Ÿåº¦å¢é‡m/s
+	double dv_k[3]			//kæ—¶åˆ»é€Ÿåº¦å¢é‡m/s
 Out:
-	double dv_f_b[3]		//bÏµ±ÈÁ¦»ı·ÖÏîm/s  dv_f,k_b(k-1)
+	double dv_f_b[3]		//bç³»æ¯”åŠ›ç§¯åˆ†é¡¹m/s  dv_f,k_b(k-1)
 */
 void Cal_dv_f_b(const double groy_k_1[3], const double groy_k[3], const double dv_k_1[3],
 	const double dv_k[3], double dv_f_b[3])
 {
-	//¶¨ÒåÈı¸ö²æ³ËÏî
+	//å®šä¹‰ä¸‰ä¸ªå‰ä¹˜é¡¹
 	double cross1[3] = { 0.0,0.0,0.0 };
 	double cross2[3] = { 0.0,0.0,0.0 };
 	double cross3[3] = { 0.0,0.0,0.0 };
-	//¼ÆËã²æ³ËÏî
+	//è®¡ç®—å‰ä¹˜é¡¹
 	cross_3_1(groy_k, dv_k, cross1);
 	cross_3_1(groy_k_1, dv_k, cross2);
 	cross_3_1(dv_k_1, groy_k, cross3);
-	//¼ÆËãbÏµ±ÈÁ¦»ı·ÖÏî
+	//è®¡ç®—bç³»æ¯”åŠ›ç§¯åˆ†é¡¹
 	for (int i = 0; i < 3; i++)
 	{
 		dv_f_b[i] = dv_k[i] + cross1[i] / 2 + (cross2[i] + cross3[i]) / 12;
 	}
 }
 
-//¼ÆËã±ÈÁ¦»ı·ÖÏî
-//ĞèÍâÍÆÊı¾İÖÁÊ±¿Ìtk-1/2
+//è®¡ç®—æ¯”åŠ›ç§¯åˆ†é¡¹
+//éœ€å¤–æ¨æ•°æ®è‡³æ—¶åˆ»tk-1/2
 /*
 In:
-	double ERV[3]			//nÏµÏà¶ÔiÏµ×ª¶¯µÄµÈĞ§Ğı×ªÊ¸Á¿rad
-	Mat C_bn_k_1			//k-1Ê±¿Ì×ËÌ¬¾ØÕórad(3x3)
-	double dv_f_b[3]		//bÏµ±ÈÁ¦»ı·ÖÏîm/s
+	double ERV[3]			//nç³»ç›¸å¯¹iç³»è½¬åŠ¨çš„ç­‰æ•ˆæ—‹è½¬çŸ¢é‡rad
+	Mat C_bn_k_1			//k-1æ—¶åˆ»å§¿æ€çŸ©é˜µrad(3x3)
+	double dv_f_b[3]		//bç³»æ¯”åŠ›ç§¯åˆ†é¡¹m/s
 	
 Out:
-	double dv_f_n[3]		//±ÈÁ¦»ı·ÖÏîm/s  dv_f,k_n(k-1)
+	double dv_f_n[3]		//æ¯”åŠ›ç§¯åˆ†é¡¹m/s  dv_f,k_n(k-1)
 */
 void Cal_dv_f_n(const double ERV[3],const Mat C_bn_k_1,const double dv_f_b[3],
 	double dv_f_n[3])
 {
-	Mat I = Mat::Identity(3);//3x3µ¥Î»¾ØÕó
-	Mat antisym_ERV = Cal_Antisymmmetric_Mat(ERV);//µÈĞ§Ğı×ªÊ¸Á¿µÄ·´¶Ô³Æ¾ØÕó
-	Mat dv_fb(3, 1);//½«bÏµ±ÈÁ¦»ı·ÖÏîÓÃMatÀà±íÊ¾£¬±ãÓÚºóĞø¾ØÕóÔËËã
+	Mat I = Mat::Identity(3);//3x3å•ä½çŸ©é˜µ
+	Mat antisym_ERV = Cal_Antisymmmetric_Mat(ERV);//ç­‰æ•ˆæ—‹è½¬çŸ¢é‡çš„åå¯¹ç§°çŸ©é˜µ
+	Mat dv_fb(3, 1);//å°†bç³»æ¯”åŠ›ç§¯åˆ†é¡¹ç”¨Matç±»è¡¨ç¤ºï¼Œä¾¿äºåç»­çŸ©é˜µè¿ç®—
 	for (int i = 0; i < 3; i++)
 	{
 		dv_fb(i, 0) = dv_f_b[i];
@@ -531,12 +555,12 @@ void Cal_dv_f_n(const double ERV[3],const Mat C_bn_k_1,const double dv_f_b[3],
 	}
 }
 
-//¼ÆËã·´¶Ô³Æ¾ØÕó
+//è®¡ç®—åå¯¹ç§°çŸ©é˜µ
 /*
 In:
-	double a[3]				//ÏòÁ¿a(3x1)
+	double a[3]				//å‘é‡a(3x1)
 Out:
-	Mat ax					//·´¶Ô³Æ¾ØÕó
+	Mat ax					//åå¯¹ç§°çŸ©é˜µ
 */
 Mat Cal_Antisymmmetric_Mat(const double a[3])
 {
@@ -547,24 +571,24 @@ Mat Cal_Antisymmmetric_Mat(const double a[3])
 	return ax;
 }
 
-//¼ÆËã·´¶Ô³Æ¾ØÕó
+//è®¡ç®—åå¯¹ç§°çŸ©é˜µ
 /*
 In:
-	Mat a					//ÏòÁ¿a
+	Mat a					//å‘é‡a
 Out:
-	Mat ax					//·´¶Ô³Æ¾ØÕó
+	Mat ax					//åå¯¹ç§°çŸ©é˜µ
 */
 Mat Skew(const Mat& a)
 {
-	// ¼ì²éÊÇ·ñÊÇ3Î¬ÏòÁ¿£¨ÎŞÂÛĞĞÁĞ£©
+	// æ£€æŸ¥æ˜¯å¦æ˜¯3ç»´å‘é‡ï¼ˆæ— è®ºè¡Œåˆ—ï¼‰
 	if ((a.cols() == 1 && a.rows() == 3) || (a.cols() == 3 && a.rows() == 1))
 	{
 		Mat ax(3, 3);
 
-		// »ñÈ¡ÏòÁ¿·ÖÁ¿£¨´¦ÀíĞĞÏòÁ¿ºÍÁĞÏòÁ¿£©
-		double v1 = (a.rows() == 3) ? a(0, 0) : a(0, 0);  // x·ÖÁ¿
-		double v2 = (a.rows() == 3) ? a(1, 0) : a(0, 1);  // y·ÖÁ¿  
-		double v3 = (a.rows() == 3) ? a(2, 0) : a(0, 2);  // z·ÖÁ¿
+		// è·å–å‘é‡åˆ†é‡ï¼ˆå¤„ç†è¡Œå‘é‡å’Œåˆ—å‘é‡ï¼‰
+		double v1 = (a.rows() == 3) ? a(0, 0) : a(0, 0);  // xåˆ†é‡
+		double v2 = (a.rows() == 3) ? a(1, 0) : a(0, 1);  // yåˆ†é‡  
+		double v3 = (a.rows() == 3) ? a(2, 0) : a(0, 2);  // zåˆ†é‡
 
 		ax(0, 0) = 0.0;   ax(0, 1) = -v3; ax(0, 2) = v2;
 		ax(1, 0) = v3;   ax(1, 1) = 0.0; ax(1, 2) = -v1;
@@ -580,36 +604,49 @@ Mat Skew(const Mat& a)
 	}
 }
 
-
-
-//nÏµËÙ¶È¸üĞÂ
+//è®¡ç®—åå¯¹ç§°çŸ©é˜µ
 /*
 In:
-	double v_k_1_n[3]			//k-1Ê±¿ÌËÙ¶ÈÔÚnÏµÏÂÍ¶Ó°m/s
-	double dv_f_n[3]			//±ÈÁ¦»ı·ÖÏîm/s
-	double dv_gc_n[3]			//ÖØÁ¦¸çÊÏ»ı·ÖÏîm/s
+	double a[3]					//å‘é‡a
 Out:
-	double v_k_n[3]				//kÊ±¿ÌËÙ¶ÈÔÚnÏµÏÂÍ¶Ó°
+	Mat ax					//åå¯¹ç§°çŸ©é˜µ
+*/
+Mat Skew(const double a[3])
+{
+	return Cal_Antisymmmetric_Mat(a);
+}
+
+
+
+
+//nç³»é€Ÿåº¦æ›´æ–°
+/*
+In:
+	double v_k_1_n[3]			//k-1æ—¶åˆ»é€Ÿåº¦åœ¨nç³»ä¸‹æŠ•å½±m/s
+	double dv_f_n[3]			//æ¯”åŠ›ç§¯åˆ†é¡¹m/s
+	double dv_gc_n[3]			//é‡åŠ›å“¥æ°ç§¯åˆ†é¡¹m/s
+Out:
+	double v_k_n[3]				//kæ—¶åˆ»é€Ÿåº¦åœ¨nç³»ä¸‹æŠ•å½±
 */
 void Cal_v_k_n(const double v_k_1_n[3], const double dv_f_n[3], const double dv_gc_n[3],
 	double v_k_n[3])
 {
-	//¼ÆËãkÊ±¿ÌËÙ¶È
+	//è®¡ç®—kæ—¶åˆ»é€Ÿåº¦
 	for (int i = 0; i < 3; i++)
 	{
 		v_k_n[i] = v_k_1_n[i] + dv_f_n[i] + dv_gc_n[i];
 	}
 }
 
-//¸ß³Ì¸üĞÂ
+//é«˜ç¨‹æ›´æ–°
 /*
 In:
-	double h_k_1			//k-1Ê±¿Ì¸ß³Ìm
-	double vD_k_1			//k-1Ê±¿Ì´¹ÏòËÙ¶Èm/s
-	double vD_k				//kÊ±¿Ì´¹ÏòËÙ¶Èm/s
-	double dt				//²ÉÑù¼ä¸ôs
+	double h_k_1			//k-1æ—¶åˆ»é«˜ç¨‹m
+	double vD_k_1			//k-1æ—¶åˆ»å‚å‘é€Ÿåº¦m/s
+	double vD_k				//kæ—¶åˆ»å‚å‘é€Ÿåº¦m/s
+	double dt				//é‡‡æ ·é—´éš”s
 Out:
-	double h_k				//kÊ±¿Ì¸ß³Ìm
+	double h_k				//kæ—¶åˆ»é«˜ç¨‹m
 */
 double Cal_h_k(double h_k_1, double vD_k_1, double vD_k, double dt)
 {
@@ -617,56 +654,56 @@ double Cal_h_k(double h_k_1, double vD_k_1, double vD_k, double dt)
 	return h_k;
 }
 
-//Î³¶È¸üĞÂ
+//çº¬åº¦æ›´æ–°
 /*
 In:
-	double lat_k_1			//k-1Ê±¿ÌÎ³¶Èrad
-	double vN_k_1			//k-1Ê±¿Ì±±ÏòËÙ¶Èm/s
-	double vN_k				//kÊ±¿Ì±±ÏòËÙ¶Èm/s
-	double h_mid			//tk-1/2Ê±¿Ì¸ß³Ìm
-	double dt				//²ÉÑù¼ä¸ôs
+	double lat_k_1			//k-1æ—¶åˆ»çº¬åº¦rad
+	double vN_k_1			//k-1æ—¶åˆ»åŒ—å‘é€Ÿåº¦m/s
+	double vN_k				//kæ—¶åˆ»åŒ—å‘é€Ÿåº¦m/s
+	double h_mid			//tk-1/2æ—¶åˆ»é«˜ç¨‹m
+	double dt				//é‡‡æ ·é—´éš”s
 Out:
-	double lat_k			//kÊ±¿ÌÎ³¶Èrad
+	double lat_k			//kæ—¶åˆ»çº¬åº¦rad
 */
 double Cal_lat_k(double lat_k_1, double vN_k_1, double vN_k, double h_mid, double dt)
 {
-	//¼ÆËã×ÓÎçÈ¦°ë¾¶
+	//è®¡ç®—å­åˆåœˆåŠå¾„
 	double RM_k_1 = Cal_RM(lat_k_1);
-	//¼ÆËãkÊ±¿ÌÎ³¶È
+	//è®¡ç®—kæ—¶åˆ»çº¬åº¦
 	double lat_k = lat_k_1 + (vN_k_1 + vN_k) / 2 / (RM_k_1 + h_mid) * dt;
 	return lat_k;
 }
 
-//¾­¶È¸üĞÂ
+//ç»åº¦æ›´æ–°
 /*
 In:
-	double lon_k_1			//k-1Ê±¿Ì¾­¶Èrad
-	double vE_k_1			//k-1Ê±¿Ì¶«ÏòËÙ¶Èm/s
-	double vE_k				//kÊ±¿Ì¶«ÏòËÙ¶Èm/s
-	double lat_mid			//tk-1/2Ê±¿ÌÎ³¶Èrad
-	double h_mid			//tk-1/2Ê±¿Ì¸ß³Ìm
-	double dt				//²ÉÑù¼ä¸ôs
+	double lon_k_1			//k-1æ—¶åˆ»ç»åº¦rad
+	double vE_k_1			//k-1æ—¶åˆ»ä¸œå‘é€Ÿåº¦m/s
+	double vE_k				//kæ—¶åˆ»ä¸œå‘é€Ÿåº¦m/s
+	double lat_mid			//tk-1/2æ—¶åˆ»çº¬åº¦rad
+	double h_mid			//tk-1/2æ—¶åˆ»é«˜ç¨‹m
+	double dt				//é‡‡æ ·é—´éš”s
 Out:
-	double lon_k			//kÊ±¿Ì¾­¶Èrad
+	double lon_k			//kæ—¶åˆ»ç»åº¦rad
 */
 double Cal_lon_k(double lon_k_1, double vE_k_1, double vE_k, double lat_mid, double h_mid, double dt)
 {
-	//¼ÆËãÃ®ÓÏÈ¦°ë¾¶
+	//è®¡ç®—å¯é…‰åœˆåŠå¾„
 	double RN_mid = Cal_RN(lat_mid);
-	//¼ÆËãkÊ±¿Ì¾­¶È
+	//è®¡ç®—kæ—¶åˆ»ç»åº¦
 	double lon_k = lon_k_1 + (vE_k_1 + vE_k) / 2 / ((RN_mid + h_mid) * cos(lat_mid)) * dt;
 	return lon_k;
 }
 
 
-//Ñ°ÕÒ³õÊ¼Êı¾İË÷Òı
+//å¯»æ‰¾åˆå§‹æ•°æ®ç´¢å¼•
 /*
 In:
-	vector<IMUDataEpoch> imudata		//IMUÊı¾İĞòÁĞ
-	double starttime					//³õÊ¼Ê±¼äs
-	double tolerance					//Ê±¼äÈİ²îs
+	vector<IMUDataEpoch> imudata		//IMUæ•°æ®åºåˆ—
+	double starttime					//åˆå§‹æ—¶é—´s
+	double tolerance					//æ—¶é—´å®¹å·®s
 Out:
-	int& index_start					//³õÊ¼Êı¾İË÷Òı
+	int& index_start					//åˆå§‹æ•°æ®ç´¢å¼•
 */
 bool FindInitialIndex(const std::vector<INS::IMUDataEpoch>& imudata, double starttime, int& index_start,double tolerance)
 {
@@ -684,7 +721,7 @@ bool FindInitialIndex(const std::vector<INS::IMUDataEpoch>& imudata, double star
 }
 
 
-//nÏµµ½eÏµ×ª»»ËÄÔªÊı
+//nç³»åˆ°eç³»è½¬æ¢å››å…ƒæ•°
 /*
 In:
 	double BLH[3]
@@ -706,33 +743,33 @@ Mat Cal_qne(const double BLH[3])
 	return qne;
 }
 
-//ÁãËÙĞŞÕı
+//é›¶é€Ÿä¿®æ­£
 /*
 In:
-	double dv[3]		//ËÙ¶ÈÔöÁ¿m/s
-	double dtheta[3]	//½ÇÔöÁ¿rad
-	double lat			//µ±µØÎ³¶Èrad
-	double h			//µ±µØ¸ß³Ìm
-	double dt			//²ÉÑù¼ä¸ôs
-	double history_dv[3] //ÀúÊ·ËÙ¶ÈÔöÁ¿m/s
-	double history_dtheta[3] //ÀúÊ·½ÇÔöÁ¿rad
+	double dv[3]		//é€Ÿåº¦å¢é‡m/s
+	double dtheta[3]	//è§’å¢é‡rad
+	double lat			//å½“åœ°çº¬åº¦rad
+	double h			//å½“åœ°é«˜ç¨‹m
+	double dt			//é‡‡æ ·é—´éš”s
+	double history_dv[3] //å†å²é€Ÿåº¦å¢é‡m/s
+	double history_dtheta[3] //å†å²è§’å¢é‡rad
 	
 Out:
-	bool isZeroVel		//ÊÇ·ñÎªÁãËÙ
+	bool isZeroVel		//æ˜¯å¦ä¸ºé›¶é€Ÿ
 */
 bool isZeroVel(const double dv[3], const double dtheta[3], double lat,double h, double dt
 	,std::vector<double>& history_dv,std::vector<double>& history_dtheta)
 {
 	bool condition1 = false;
 	bool condition2 = false;
-	//¼ÆËãËÙ¶ÈÔöÁ¿ãĞÖµ
+	//è®¡ç®—é€Ÿåº¦å¢é‡é˜ˆå€¼
 	double g = Cal_g_GRS80(lat, h);
 	double vel_threshold = 2 * g * dt; //
-	//¼ÆËã½ÇÔöÁ¿ãĞÖµ
+	//è®¡ç®—è§’å¢é‡é˜ˆå€¼
 	double ang_threshold = 3 * Omegae * dt * 100.0;
 	double var_vel_threshold = 0.1 * g * dt;
 	double var_ang_threshold = Omegae * dt;
-	//ÅĞ¶ÏÊÇ·ñÎªÁãËÙ
+	//åˆ¤æ–­æ˜¯å¦ä¸ºé›¶é€Ÿ
 	double dv_norm = sqrt(dv[0] * dv[0] + dv[1] * dv[1] + dv[2] * dv[2]);
 	double dtheta_norm = sqrt(dtheta[0] * dtheta[0] + dtheta[1] * dtheta[1] + dtheta[2] * dtheta[2]);
 	if (dv_norm < vel_threshold && dtheta_norm < ang_threshold)
@@ -768,7 +805,7 @@ bool isZeroVel(const double dv[3], const double dtheta[3], double lat,double h, 
 	var_dv /= history_dv.size();
 	var_dtheta /= history_dtheta.size();
 
-	// Ìõ¼ş2£º¾ùÖµĞ¡ÇÒ·½²îĞ¡£¨±íÊ¾ÎÈ¶¨¾²Ö¹£©
+	// æ¡ä»¶2ï¼šå‡å€¼å°ä¸”æ–¹å·®å°ï¼ˆè¡¨ç¤ºç¨³å®šé™æ­¢ï¼‰
 	condition2 = (mean_dv < vel_threshold) &&
 		(mean_dtheta < ang_threshold) &&
 		(var_dv < var_vel_threshold) &&
@@ -785,3 +822,18 @@ bool isZeroVel(const double dv[3], const double dtheta[3], double lat,double h, 
 	
 }
 
+//æ ¹æ®å‘é‡æ„é€ å¯¹è§’çŸ©é˜µ
+/*
+In:
+	double a[3]		//å‘é‡a
+Out:
+	Mat D			//å¯¹è§’çŸ©é˜µ
+*/
+Mat diag(const double a[3])
+{
+	Mat D = Mat::Zero(3, 3);
+	D(0, 0) = a[0];
+	D(1, 1) = a[1];
+	D(2, 2) = a[2];
+	return D;
+}

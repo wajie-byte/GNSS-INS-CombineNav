@@ -10,7 +10,7 @@ extern int main_gnssins();
 int main()
 {
 	//main_ins();
-	//main_gnssins();
+	main_gnssins();
 
 	
 	

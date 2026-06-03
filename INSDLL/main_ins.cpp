@@ -2,6 +2,7 @@
 #include"IMU/Cal.h"
 #include"INS/Dynamic.h"
 #include"INS/INS.h"
+#include"INS_GNSS/Combinenav.h"
 int main_ins()
 {
 	//------------------------加速度计六位置法----------------------------
@@ -16,7 +17,7 @@ int main_ins()
 
 
 	//------------------------静态解析粗对准--------------------------------
-	SPCA_func();
+	//SPCA_func();
 
 
 
@@ -24,8 +25,8 @@ int main_ins()
 
 	//------------------------参考数据纯惯导动态导航定位-----------------------------
 
-	/*
-	vector<IMUDataEpoch> ImuDataEpoch;
+	
+	std::vector<INS::IMUDataEpoch> ImuDataEpoch;
 	const char* BinFile = "D:\\visual studio\\INS\\IMUdata\\Bin\\IMU.bin";
 	const char* BindisplayFile = "D:\\visual studio\\INS\\display\\IMU_display.ASC";
 	const char* BinResultFile = "D:\\visual studio\\INS\\IMUdata\\Bin\\PureINS.bin";
@@ -38,7 +39,7 @@ int main_ins()
 	BinResultRead(BinResultFile, BinResultdisplayFile);
 
 	//设置惯导初始参数
-	IMUResultEpoch IMUstart;
+	INS::IMUResultEpoch IMUstart;
 	IMUstart.time = 91620.0; //GNSS秒
 	IMUstart.BLH[0] = 23.1373950708 * deg2rad_scale; //纬度rad
 	IMUstart.BLH[1] = 113.3713651222 * deg2rad_scale; //经度rad
@@ -50,23 +51,24 @@ int main_ins()
 	IMUstart.YPR[1] = -2.14251290749072 * deg2rad_scale; //俯仰角rad
 	IMUstart.YPR[2] = 0.0107951084511778 * deg2rad_scale; //横滚角rad
 	//纯惯导解算
-	vector<IMUResultEpoch> IMUresult;
-	InertialNavigation(ImuDataEpoch, IMUstart, IMUresult);
+	std::vector<INS::IMUResultEpoch> IMUresult;
+	//InertialNavigation(ImuDataEpoch, IMUstart, IMUresult);
+	CombineNav::Test_InsMech(ImuDataEpoch, IMUstart, IMUresult);
 	//输出纯惯导解算结果
 	const char* IMUResultFile = "D:\\visual studio\\INS\\display\\INS_result.ASC";
 	IMUResultDisplay(IMUResultFile, IMUresult);
 
 	//------------------------计算与参考结果的差值---------------------------
 	//读取参考结果
-	vector<IMUResultEpoch> IMUref;
+	std::vector<INS::IMUResultEpoch> IMUref;
 	INSResultRead(BinResultFile, IMUref);
 	//计算差值
-	vector<IMUResultEpoch> IMUdiff;
+	std::vector<INS::IMUResultEpoch> IMUdiff;
 	CalIMUResultDiff(IMUresult, IMUref, IMUdiff);
 	//输出差值结果
 	const char* IMUdiffFile = "D:\\visual studio\\INS\\display\\INS_diff.ASC";
 	IMUResultDisplay(IMUdiffFile, IMUdiff);
-	*/
+	
 
 
 

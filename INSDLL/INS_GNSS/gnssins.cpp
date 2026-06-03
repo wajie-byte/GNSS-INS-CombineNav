@@ -2,11 +2,14 @@
 #include"CombConfig.h"
 #include"../INS/INS.h"
 #include"../BASE/IMUFile.h"
+#include"../DataSend/DataSend.h"
 
 
 void CombineNav::gnssins()
 {
-	
+	//
+	SimpleUdp udp("127.0.0.1", 5005);   // 发到本机5005端口
+
 	//组合导航主函数
 	CombineNav::Param param;
 	CombineNav::Config config;
@@ -18,11 +21,10 @@ void CombineNav::gnssins()
 	double imustarttime = 0.0, imuendtime = 0.0;
 	if (!imudata.empty())
 	{
-		double imustarttime = imudata.front().time;
-		double imuendtime = imudata.back().time;
+		imustarttime = imudata.front().time;
+		imuendtime = imudata.back().time;
 	}
-	else std::cout << "imudata is empty!\n" ; return;
-	
+	else { std::cout << "imudata is empty!\n"; return; }
 
 	//gnssdata
 	std::ifstream gnssfile = CombineNav::CreateReadFile(config.files.gnssfilepath);
@@ -31,14 +33,14 @@ void CombineNav::gnssins()
 	double gnssstarttime = 0.0, gnssendtime = 0.0;
 	if (!gnssdata.empty())
 	{
-		double gnssstarttime = gnssdata.front().time;
-		double gnssendtime = gnssdata.back().time;
+		gnssstarttime = gnssdata.front().time;
+		gnssendtime = gnssdata.back().time;
 	}
-	else std::cout << "gnssdata is empty!\n" ; return;
+	else { std::cout << "gnssdata is empty!\n"; return; }
 
 
-	if (gnssdata_col == 13)config.switches.usegnssvel = true;
-	else if (gnssdata_col == 7)config.switches.usegnssvel = false;
+	if (gnssdata_col == 13) { config.switches.usegnssvel = true; }
+	else if (gnssdata_col == 7) { config.switches.usegnssvel = false; }
 	else return;
 	
 	
@@ -83,10 +85,10 @@ void CombineNav::gnssins()
 	std::cout << "Start GNSS/INS combined navigation processing...\n";
 
 	//Initialize Kalman Filter and Navigation State
-	CombineNav::KalmanFilter kf;
-	kf.Initialize(config);
+	CombineNav::KalmanFilter kf(21,18);
+	kf = kf.Initialize(config);
 	CombineNav::NavState navstate;
-	navstate.Initialize(config);
+	navstate=navstate.Initialize(config);
 
 	//data index preprocess
 	int imuindex = 0, gnssindex = 0;
@@ -100,6 +102,28 @@ void CombineNav::gnssins()
 	INS::IMUDataEpoch lastimu = imudata_proc[0];
 	INS::IMUDataEpoch thisimu = imudata_proc[0];
 	double imudt = 0.0;
+	//打开文件
+	std::ofstream navfp(navpath);
+	if (!navfp.is_open()) {
+		std::cout << "Cannot open " << navpath << std::endl;
+		return;
+	}
+
+	std::ofstream imuerrfp(imuerrpath);
+	if (!imuerrfp.is_open()) {
+		std::cout << "Cannot open " << imuerrpath << std::endl;
+		return;
+	}
+
+	std::ofstream stdfp(stdpath);
+	if (!stdfp.is_open()) {
+		std::cout << "Cannot open " << stdpath << std::endl;
+		return;
+	}
+
+	//记录处理的数据占比
+	int lastpercent = 0;
+
 
 	for (imuindex = 1; imuindex < imudata_proc.size() - 1; imuindex++)
 	{
@@ -119,7 +143,7 @@ void CombineNav::gnssins()
 		{
 			gnssindex++;
 		}
-		if (gnssindex >= gnssdata_proc.size())std::cout << "GNSS FILE END!\n"; break;//GNSS观测数据用完，结束导航计算
+		if (gnssindex >= gnssdata_proc.size()) { std::cout << "GNSS FILE END!\n"; break; }//GNSS观测数据用完，结束导航计算
 
 		//determine if GNSS update is needed
 		if (lastimu.time == gnssdata_proc[gnssindex].time)
@@ -127,7 +151,7 @@ void CombineNav::gnssins()
 			//do GNSS update for the current state
 			CombineNav::GNSSResult thisgnss = gnssdata_proc[gnssindex];
 			imudt = thisimu.time - lastimu.time;
-			kf = CombineNav::GNSSUpdate(kf, navstate, config, thisgnss, thisimu, imudt);
+			CombineNav::GNSSUpdate(kf, navstate, config, thisgnss, thisimu, imudt);
 			CombineNav::ErrorFeedBack(navstate, kf);
 			//index++ 
 			gnssindex++;
@@ -136,12 +160,69 @@ void CombineNav::gnssins()
 			//do propagation for current imu data
 			imudt = thisimu.time - lastimu.time;
 			navstate = InsMech(laststate, lastimu, thisimu);
+			InsPropagate(navstate, thisimu, imudt, kf, config.imu_noise.corrtime);
+		}
+
+		else if (lastimu.time<gnssdata_proc[gnssindex].time && thisimu.time>gnssdata_proc[gnssindex].time)
+		{
+			//ineterpolate imu to gnss time
+			INS::IMUDataEpoch firstimu, secondimu;
+			interpolate(lastimu, thisimu, gnssdata_proc[gnssindex].time, firstimu, secondimu);
+			//do propagation for first imu
+			imudt = firstimu.time - lastimu.time;
+			navstate = InsMech(laststate, lastimu, firstimu);
+			InsPropagate(navstate, firstimu, imudt, kf, config.imu_noise.corrtime);
+			//do gnss update
+			CombineNav::GNSSResult thisgnss = gnssdata_proc[gnssindex];
+			CombineNav::GNSSUpdate(kf, navstate, config, thisgnss, firstimu, imudt);
+			CombineNav::ErrorFeedBack(navstate, kf);
+			//index++
+			gnssindex++;
+			laststate = navstate;
+			lastimu = firstimu;
+			//do propagation for second imu
+			imudt = secondimu.time - lastimu.time;
+			navstate = InsMech(laststate, lastimu, secondimu);
+			InsPropagate(navstate, secondimu, imudt, kf, config.imu_noise.corrtime);
+		}
+		else
+		{
+			// only do propagation
+			// INS mechanization
+			navstate = InsMech(laststate, lastimu, thisimu);
+			//error propagation
+			InsPropagate(navstate, thisimu, imudt, kf, config.imu_noise.corrtime);
+		}
+
+
+
+
+		//save data
+		//write navresult to file
+		SaveNavResult(navfp, navstate, param);
+		//write imu error to file
+		SaveIMUError(imuerrfp, navstate, param);
+		//write navstate std to file
+		SaveStateStd(stdfp, kf, navstate, param);
+
+		//send data
+		// 一行发送
+		udp.send(navstate.time, navstate.pos[0], navstate.pos[1], navstate.pos[2], navstate.vel[0], navstate.vel[1], navstate.vel[2], navstate.att[0], navstate.att[1], navstate.att[2]);
+
+		//print processing information
+		int current_percent = (int)(100.0 * imuindex / imudata_proc.size());
+		if (current_percent > lastpercent)
+		{
+			std::cout << "Processing: " << current_percent << "%\n";
+			lastpercent = current_percent;
 		}
 
 	}
-
-	
-
+	//close file
+	navfp.close();
+	imuerrfp.close();
+	stdfp.close();
+	std::cout << "GNSS / INS Integration Processing Finished!\n";
 
 
 }

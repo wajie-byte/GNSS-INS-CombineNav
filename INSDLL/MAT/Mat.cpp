@@ -320,3 +320,107 @@ Mat Mat::operator-() const {
     }
     return result;
 }
+
+// ==================== SubMatrix 实现 ====================
+
+Mat::SubMatrix::SubMatrix(Mat& mat, size_t r1, size_t r2, size_t c1, size_t c2)
+    : matrix(mat), row_start(r1), row_end(r2), col_start(c1), col_end(c2) {
+    // 边界检查
+    if (r1 >= r2 || c1 >= c2 || r2 > matrix.row || c2 > matrix.col) {
+        throw std::out_of_range("Submatrix indices out of range");
+    }
+}
+
+Mat::SubMatrix& Mat::SubMatrix::operator=(const Mat& other) {
+    if (rows() != other.rows() || cols() != other.cols()) {
+        throw std::invalid_argument("Submatrix and source matrix dimensions mismatch");
+    }
+
+    for (size_t i = 0; i < rows(); ++i) {
+        for (size_t j = 0; j < cols(); ++j) {
+            matrix(row_start + i, col_start + j) = other(i, j);
+        }
+    }
+    return *this;
+}
+
+Mat::SubMatrix& Mat::SubMatrix::operator=(const SubMatrix& other) {
+    if (rows() != other.rows() || cols() != other.cols()) {
+        throw std::invalid_argument("Submatrix dimensions mismatch");
+    }
+
+    for (size_t i = 0; i < rows(); ++i) {
+        for (size_t j = 0; j < cols(); ++j) {
+            matrix(row_start + i, col_start + j) = other(i, j);
+        }
+    }
+    return *this;
+}
+
+Mat::SubMatrix::operator Mat() const {
+    Mat result(rows(), cols());
+    for (size_t i = 0; i < rows(); ++i) {
+        for (size_t j = 0; j < cols(); ++j) {
+            result(i, j) = matrix(row_start + i, col_start + j);
+        }
+    }
+    return result;
+}
+
+double& Mat::SubMatrix::operator()(size_t i, size_t j) {
+    if (i >= rows() || j >= cols()) {
+        throw std::out_of_range("Submatrix access out of range");
+    }
+    return matrix(row_start + i, col_start + j);
+}
+
+const double& Mat::SubMatrix::operator()(size_t i, size_t j) const {
+    if (i >= rows() || j >= cols()) {
+        throw std::out_of_range("Submatrix access out of range");
+    }
+    return matrix(row_start + i, col_start + j);
+}
+
+// ==================== ConstSubMatrix 实现 ====================
+
+Mat::ConstSubMatrix::ConstSubMatrix(const Mat& mat, size_t r1, size_t r2, size_t c1, size_t c2)
+    : matrix(mat), row_start(r1), row_end(r2), col_start(c1), col_end(c2) {
+    if (r1 >= r2 || c1 >= c2 || r2 > matrix.row || c2 > matrix.col) {
+        throw std::out_of_range("Submatrix indices out of range");
+    }
+}
+
+Mat::ConstSubMatrix::operator Mat() const {
+    Mat result(rows(), cols());
+    for (size_t i = 0; i < rows(); ++i) {
+        for (size_t j = 0; j < cols(); ++j) {
+            result(i, j) = matrix(row_start + i, col_start + j);
+        }
+    }
+    return result;
+}
+
+double Mat::ConstSubMatrix::operator()(size_t i, size_t j) const {
+    if (i >= rows() || j >= cols()) {
+        throw std::out_of_range("Submatrix access out of range");
+    }
+    return matrix(row_start + i, col_start + j);
+}
+
+// ==================== 切片操作实现 ====================
+
+Mat::SubMatrix Mat::operator()(size_t r1, size_t r2, size_t c1, size_t c2) {
+    return SubMatrix(*this, r1, r2, c1, c2);
+}
+
+Mat::ConstSubMatrix Mat::operator()(size_t r1, size_t r2, size_t c1, size_t c2) const {
+    return ConstSubMatrix(*this, r1, r2, c1, c2);
+}
+
+Mat::SubMatrix Mat::operator()(const Range& rows, const Range& cols) {
+    return SubMatrix(*this, rows.start, rows.end, cols.start, cols.end);
+}
+
+Mat::ConstSubMatrix Mat::operator()(const Range& rows, const Range& cols) const {
+    return ConstSubMatrix(*this, rows.start, rows.end, cols.start, cols.end);
+}

@@ -58,6 +58,7 @@ void Cal_dv_f_n(const double ERV[3], const Mat C_bn_k_1, const double dv_f_b[3],
 Mat Cal_Antisymmmetric_Mat(const double a[3]);
 //计算反对称矩阵
 Mat Skew(const Mat& a);
+Mat Skew(const double a[3]);
 //n系速度更新
 void Cal_v_k_n(const double v_k_1_n[3], const double dv_f_n[3], const double dv_gc_n[3],
 	double v_k_n[3]);
@@ -76,4 +77,10 @@ Mat Cal_qne(const double BLH[3]);
 //零速修正
 bool isZeroVel(const double dv[3], const double dtheta[3], double lat, double h, double dt,
 	 std::vector<double>& history_dv, std::vector<double>& history_dtheta);
+//根据向量构造对角矩阵
+Mat diag(const double a[3]);
+
+
+
+
 #endif // !DYNAMIC_H

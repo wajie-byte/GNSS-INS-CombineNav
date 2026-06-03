@@ -15,16 +15,16 @@ Out:
 	kf_updated: 更新后的卡尔曼滤波器状态
 */
 
-CombineNav::KalmanFilter CombineNav::GNSSUpdate(const CombineNav::KalmanFilter& kf, const CombineNav::NavState& navstate, const CombineNav::Config& config,
+void CombineNav::GNSSUpdate(CombineNav::KalmanFilter& kf, const CombineNav::NavState& navstate, const CombineNav::Config& config,
 	const CombineNav::GNSSResult& thisgnss, const INS::IMUDataEpoch& thisimu, double imudt)
 {
 	CombineNav::Param param;
-	CombineNav::KalmanFilter kf_updated = kf;
+	
 	double gnssposstd[3] = { thisgnss.pos_std[0], thisgnss.pos_std[1], thisgnss.pos_std[2] };
 	if(gnssposstd[0]>5.0||gnssposstd[1]>5.0||gnssposstd[2]>5.0)
 	{
 		std::cout << "Warning: GNSS position standard deviation is too large, skipping this update at" << thisgnss.time << "s.\n";
-		return kf_updated;
+		return;
 	}
 	//measurement innovation
 	Mat DR = Mat::Zero(3, 3);
@@ -58,11 +58,11 @@ CombineNav::KalmanFilter CombineNav::GNSSUpdate(const CombineNav::KalmanFilter& 
 	Mat H = Mat::Zero(3, kf.x_rank);
 	H(0, 0) = 1.0; H(1, 1) = 1.0; H(2, 2) = 1.0;//位置状态对位置观测的直接关系
 	Mat skew_Cbn_antlever = Skew(navstate.Cbn * antlever);
-	H(0, 6) = skew_Cbn_antlever(0, 0); H(0, 7) = skew_Cbn_antlever(0, 1); H(0, 8) = skew_Cbn_antlever(0, 2);//姿态误差对位置观测的影响
+	H(0, 3, 6, 9) = skew_Cbn_antlever;
 	// update covariance and state vector
 	Mat K = kf.P * H.transpose() * (H * kf.P * H.transpose() + R).inverse();
-	kf_updated.x = kf.x + K * (Z - H * kf.x);
-	kf_updated.P = (Mat::Identity(kf.x_rank) - K * H) * kf.P * (Mat::Identity(kf.x_rank) - K * H).transpose() + K * R * K.transpose();
+	kf.x = kf.x + K * (Z - H * kf.x);
+	kf.P = (Mat::Identity(kf.x_rank) - K * H) * kf.P * (Mat::Identity(kf.x_rank) - K * H).transpose() + K * R * K.transpose();
 
 	//check if use gnss velocity update
 	if (config.switches.usegnssvel)
@@ -71,7 +71,7 @@ CombineNav::KalmanFilter CombineNav::GNSSUpdate(const CombineNav::KalmanFilter& 
 		if (gnssvelstd[0] > 0.5 || gnssvelstd[1] > 0.5 || gnssvelstd[2] > 0.5)
 		{
 			std::cout << "Warning: GNSS velocity standard deviation is too large, skipping velocity update at" << thisgnss.time << "s.\n";
-			return kf_updated;
+			return;
 		}
 		Mat Cbn = navstate.Cbn;
 		//ins velocity in n frame
@@ -131,14 +131,14 @@ CombineNav::KalmanFilter CombineNav::GNSSUpdate(const CombineNav::KalmanFilter& 
 		}
 
 		// velocity update
-		Mat K_vel = kf_updated.P * H_vel.transpose() * (H_vel * kf_updated.P * H_vel.transpose() + R_vel).inverse();
-		kf_updated.x = kf_updated.x + K_vel * (Z_vel - H_vel * kf_updated.x);
-		kf_updated.P = (Mat::Identity(kf_updated.x_rank) - K_vel * H_vel) * kf_updated.P * (Mat::Identity(kf_updated.x_rank) - K_vel * H_vel).transpose() + K_vel * R_vel * K_vel.transpose();
+		Mat K_vel = kf.P * H_vel.transpose() * (H_vel * kf.P * H_vel.transpose() + R_vel).inverse();
+		kf.x = kf.x + K_vel * (Z_vel - H_vel * kf.x);
+		kf.P = (Mat::Identity(kf.x_rank) - K_vel * H_vel) * kf.P * (Mat::Identity(kf.x_rank) - K_vel * H_vel).transpose() + K_vel * R_vel * K_vel.transpose();
 
 	}
 	//End
-	
-	return kf_updated;
+
+	return;
 }
 
 
